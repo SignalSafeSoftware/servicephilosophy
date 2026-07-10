@@ -8,5 +8,8 @@ htmlcov/
 .coverage
 coverage.xml
 dist/
+build/
+*.egg-info
 *.egg-info/
+.eggs/
 .DS_Store
