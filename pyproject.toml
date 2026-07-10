@@ -31,6 +31,8 @@ dev = [
     "ruff>=0.15",
     "mypy>=1.11",
     "build>=1.2",
+    "twine>=5",
+    "bandit>=1.7",
 ]
 
 [project.urls]

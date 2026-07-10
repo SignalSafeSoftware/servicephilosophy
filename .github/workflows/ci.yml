@@ -1,0 +1,220 @@
+name: CI
+
+on:
+    workflow_dispatch:
+    push:
+        branches: [main]
+        tags: ["v*"]
+    pull_request:
+        branches: [main, develop]
+        types: [opened, synchronize, reopened]
+
+concurrency:
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+jobs:
+    checks:
+        name: Checks (Python ${{ matrix.python-version }})
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                python-version: ["3.12", "3.13"]
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-python@v6
+              with:
+                  python-version: ${{ matrix.python-version }}
+
+            - uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+              with:
+                  enable-cache: true
+
+            - name: Install package and tooling
+              run: |
+                  uv venv --seed
+                  uv export --extra dev --frozen --no-emit-project -o requirements-dev.txt
+                  .venv/bin/python -m pip install --require-hashes --only-binary :all: --no-deps -r requirements-dev.txt
+                  .venv/bin/python -m pip install --no-deps -e .
+
+            - name: Ruff
+              if: matrix.python-version == '3.12'
+              run: |
+                  .venv/bin/ruff check src tests
+                  .venv/bin/ruff format --check src tests
+
+            - name: Mypy
+              if: matrix.python-version == '3.12'
+              run: .venv/bin/mypy src --install-types --non-interactive
+
+            - name: Bandit
+              if: matrix.python-version == '3.12'
+              run: .venv/bin/bandit -r src -q -x ./tests,./.venv
+
+    tests:
+        name: Tests (Python ${{ matrix.python-version }})
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                python-version: ["3.12", "3.13"]
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-python@v6
+              with:
+                  python-version: ${{ matrix.python-version }}
+
+            - uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+              with:
+                  enable-cache: true
+
+            - name: Install package and tooling
+              run: |
+                  uv venv --seed
+                  uv export --extra dev --frozen --no-emit-project -o requirements-dev.txt
+                  .venv/bin/python -m pip install --require-hashes --only-binary :all: --no-deps -r requirements-dev.txt
+                  .venv/bin/python -m pip install --no-deps -e .
+
+            - name: Pytest with coverage
+              run: .venv/bin/python -m pytest -q --cov-report=xml
+
+            - name: Upload coverage
+              if: matrix.python-version == '3.12'
+              uses: actions/upload-artifact@v7
+              with:
+                  name: coverage
+                  path: coverage.xml
+
+    scan:
+        name: Scan
+        needs: [tests]
+        # Fork PRs never run scan (no secrets on untrusted code). Same-repo PRs run only
+        # with the "scan" label. Push (including v* tags) and workflow_dispatch always scan.
+        if: |
+            (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+            (
+                github.event_name == 'workflow_dispatch' ||
+                github.event_name == 'push' ||
+                (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'scan'))
+            )
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
+        env:
+            SONAR_TOKEN: ${{ secrets.PACKAGES_SONAR_TOKEN }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Download coverage
+              uses: actions/download-artifact@v8
+              with:
+                  name: coverage
+                  path: .
+
+            - name: Verify coverage report
+              run: test -f coverage.xml
+
+            # Scan runs only on trusted refs (not fork PRs). When this job runs, the token
+            # must be present — fail fast with a clear message instead of a null-token scan.
+            - name: Verify SonarCloud token
+              env:
+                  PACKAGES_SONAR_TOKEN: ${{ secrets.PACKAGES_SONAR_TOKEN }}
+              run: |
+                  if [ -z "${PACKAGES_SONAR_TOKEN}" ]; then
+                      echo "::error::SonarCloud scan is required for this workflow run but PACKAGES_SONAR_TOKEN is not configured."
+                      echo "Configure the org shared SonarCloud token as a repository or organization secret named PACKAGES_SONAR_TOKEN."
+                      exit 1
+                  fi
+
+            - name: SonarCloud scan
+              uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0
+              env:
+                  SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+
+            - name: Sonar PR comment
+              if: github.event_name == 'pull_request'
+              uses: actions/github-script@v9
+              with:
+                  script: |
+                      const body = `SonarCloud analysis for \`servicephilosophy\` (\`SignalSafeSoftware_servicephilosophy\`) completed with result \`${{ job.status }}\`.`;
+                      await github.rest.issues.createComment({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                          body,
+                      });
+
+    smoke-package:
+        name: Smoke package
+        needs: [checks, tests]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-python@v6
+              with:
+                  python-version: "3.12"
+
+            - uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+              with:
+                  enable-cache: true
+
+            - name: Install package and tooling
+              run: |
+                  uv venv --seed
+                  uv export --extra dev --frozen --no-emit-project -o requirements-dev.txt
+                  .venv/bin/python -m pip install --require-hashes --only-binary :all: --no-deps -r requirements-dev.txt
+                  .venv/bin/python -m pip install --no-deps -e .
+
+            - name: Smoke-test wheel artifact
+              run: .venv/bin/python scripts/smoke_package.py
+
+    publish:
+        name: Publish
+        needs: [checks, tests, scan, smoke-package]
+        # Publish runs only from main dispatch or v* tags. Sonar must succeed — scan is
+        # never skipped on those events, so a missing token or failed scan blocks release.
+        if: |
+            (
+              (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+              (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+            ) &&
+            needs.checks.result == 'success' &&
+            needs.tests.result == 'success' &&
+            needs.scan.result == 'success' &&
+            needs.smoke-package.result == 'success'
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            id-token: write
+        environment: pypi
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-python@v6
+              with:
+                  python-version: "3.12"
+
+            - uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+              with:
+                  enable-cache: true
+
+            - name: Build distributions
+              run: |
+                  uv venv --seed
+                  uv export --extra dev --frozen --no-emit-project -o requirements-dev.txt
+                  .venv/bin/python -m pip install --require-hashes --only-binary :all: --no-deps -r requirements-dev.txt
+                  .venv/bin/python -m build
+                  .venv/bin/twine check dist/*
+
+            - name: Publish to PyPI
+              uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
