@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-21
+
+### Changed
+
+- Documentation, package metadata and vetted build tooling refresh; factory wiring and the zero-runtime-dependency contract are unchanged.
+- Bound build tooling to vetted setuptools 84.2.1+ within major 84 and wheel 0.46+ below 1.
+- Release preparation only; publication is a separate approved operation.
+
 ## [0.1.1] - 2026-08-30
 
 ### Added

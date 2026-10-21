@@ -1,83 +1,60 @@
 # Releasing `servicephilosophy`
 
-Standalone repository: [SignalSafeSoftware/servicephilosophy](https://github.com/SignalSafeSoftware/servicephilosophy).
+The source prepares **0.1.2**. This is an approval candidate, not a declaration
+that publication happened. Repository: [SignalSafeSoftware/servicephilosophy](https://github.com/SignalSafeSoftware/servicephilosophy).
 
-## CI publish policy
+## Checks and artifacts
 
-- **Checks and tests** run on every pull request.
-- **`scan` (SonarCloud)** on pull requests is **optional** — it runs only when the PR has the **`scan`** label. On **`push`** (including **`v*`** tag pushes) and **`workflow_dispatch`**, **`scan`** runs automatically.
-- **Fork pull requests never run `scan`** — secrets are not exposed to untrusted code.
-- **Publish does not run** from pull requests.
-- **Publish runs** when:
-  - **Manual:** GitHub Actions → **CI** → **Run workflow** on branch **`main`**, or
-  - **Tag:** push a semver tag matching `v*` (for example `v0.1.0`).
-- **Publish requires** successful **`checks`**, **`tests`**, **`scan`**, and **`smoke-package`** jobs in the same workflow run (see [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)).
-- On publish events, **`scan` always runs**; if **`PACKAGES_SONAR_TOKEN`** is missing, the workflow fails at a preflight step with an explicit error.
+```sh
+uv sync --frozen --extra dev
+uv lock --check
+uv run ruff check src tests
+uv run ruff format --check src tests
+uv run mypy src --install-types --non-interactive
+uv run bandit -r src -q
+uv run pytest -q
+uv run python scripts/smoke_package.py
+```
 
-### SonarCloud secret
+The smoke script builds wheel/sdist, validates metadata, installs the actual wheel
+in a clean environment, and verifies public imports and `py.typed`. Inspect both
+archives for source/metadata ownership before approving their hashes.
+Run `docs/examples/factory_service.py`; runtime dependencies must remain empty.
 
-This org uses a shared SonarCloud token secret named **`PACKAGES_SONAR_TOKEN`**. Configure it at the organization or repository level. The scan job maps it to the `SONAR_TOKEN` environment variable expected by the SonarCloud action.
+Build dependencies use setuptools `>=84.2.1,<85` and wheel `>=0.46,<1`.
+They are build tools, not runtime dependencies. The source version, built metadata,
+imported version and approved tag must agree; do not select a tag from a dirty checkout.
 
-### SonarCloud one-time setup (required)
+## Coordinated unpublished dependencies
 
-After creating the SonarCloud project **`SignalSafeSoftware_servicephilosophy`**:
+For release preparation, test exact built upstream archives in disposable consumers.
+A candidate dependency need not already exist in the public registry. Do not invent
+registry URLs/hashes, commit temporary local source overrides, or claim a stale lock
+passed frozen verification. Publish approved upstream packages first; regenerate
+this repository's real registry lock, rerun frozen CI and installed-artifact checks,
+and verify the runtime payload matches the reviewed candidate before dependent publication.
 
-1. Open **Analysis Method** for the project:  
-   https://sonarcloud.io/project/analysis_method?id=SignalSafeSoftware_servicephilosophy
+## Existing workflow interfaces
 
-2. **Disable Automatic Analysis.**  
-   CI runs analysis via GitHub Actions (`.github/workflows/ci.yml`). SonarCloud rejects CI analysis when Automatic Analysis is also enabled:
+`.github/workflows/ci.yml` runs checks/tests on PRs. Same-repository PRs scan only
+with the `scan` label; forks receive no scanner secret. Pushes to `main`, `v*`
+tags and manual dispatch run scanning. Release requires successful checks, tests,
+scan and package smoke; a skipped/failed scan cannot publish.
 
-   ```text
-   ERROR You are running CI analysis while Automatic Analysis is enabled.
-   Please consider disabling one or the other.
-   ```
+**Manual dispatch on `main` is a publishing action.** It is not a check-only preview.
+After explicit release approval and all required checks, use the exact approved
+`v0.1.2` tag on the reviewed main commit (or the existing approved main dispatch).
+A PR, release note or this file does not itself authorize tag creation or upload.
+Do not retag or retry a version until registry readback proves whether it exists.
 
-3. Confirm **`sonar-project.properties`** matches the project key (`SignalSafeSoftware_servicephilosophy`) and organization (`signalsafesoftware`).
+## Publisher identity and verification
 
-4. Re-run the failed **CI** workflow on **`main`** (or push an empty commit) to verify the **Scan** job succeeds.
+Existing PyPI trusted publisher: owner `SignalSafeSoftware`, repository `servicephilosophy`,
+workflow `ci.yml`, environment `pypi`. GitHub grants `id-token: write` only to the
+publish job. Scanner configuration uses `PACKAGES_SONAR_TOKEN`; no credential
+values belong in docs, build artifacts or review packets. Automatic Sonar analysis
+must remain off because CI submits coverage-backed analysis.
 
-This matches other SignalSafe Python packages (for example `sqlphilosophy`) that use CI-based SonarCloud analysis only.
-
-## Before you release
-
-1. Bump version in [`pyproject.toml`](./pyproject.toml) (`[project].version`).
-2. Update [CHANGELOG.md](./CHANGELOG.md) when present.
-3. Run locally (matches CI checks):
-
-   ```bash
-   uv sync --extra dev
-   uv lock --check
-   uv run ruff check src tests
-   uv run ruff format --check src tests
-   uv run mypy src --install-types --non-interactive
-   uv run bandit -r src -q -x ./tests,./.venv
-   uv run pytest -q
-   uv run python scripts/smoke_package.py
-   ```
-
-## Publish
-
-1. Commit version updates on **`main`** and push.
-2. Tag and push:
-
-   ```bash
-   git tag vX.Y.Z
-   git push origin vX.Y.Z
-   ```
-
-## One-time PyPI setup
-
-1. Register **`servicephilosophy`** on PyPI.
-2. On PyPI → project **Publishing** → **Add a new pending publisher**:
-
-   | Field | Value |
-   | ----- | ----- |
-   | Project name | `servicephilosophy` |
-   | Publisher platform | GitHub Actions |
-   | Owner | `SignalSafeSoftware` |
-   | Repository name | `servicephilosophy` |
-   | Workflow filename | `ci.yml` |
-   | Environment name | `pypi` |
-
-3. Create GitHub Environment **`pypi`** in repository settings (no secrets required for trusted publishing).
+After publication, read back wheel/sdist and metadata from PyPI, check version,
+license, dependencies, imports and runtime/source hashes, then update the coordinated
+consumer locks. Registry success and host adoption/deployment are separate evidence.

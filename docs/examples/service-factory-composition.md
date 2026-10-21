@@ -291,4 +291,4 @@ Libraries never import your application factory. The application composes them.
 - [servicePhilosophy README](https://github.com/SignalSafeSoftware/servicephilosophy)
 - [sqlPhilosophy repository guide](https://github.com/SignalSafeSoftware/sqlphilosophy/blob/main/docs/repository-guide.md)
 - [sqlPhilosophy + servicePhilosophy integration](https://github.com/SignalSafeSoftware/sqlphilosophy/blob/main/docs/integration/servicephilosophy.md)
-- [apiPhilosophy design document](../../../apiphilosophy/docs/DESIGN.md)
+- The HTTP-layer sketch above is illustrative; no apiPhilosophy implementation or sibling checkout is bundled with this package.
