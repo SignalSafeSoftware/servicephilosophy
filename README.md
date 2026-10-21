@@ -131,6 +131,7 @@ uv run mypy src
 ```python
 from servicephilosophy import (
     FactoryRequiredError,
+    ServicePhilosophyError,
     RepositoryFactoryProtocol,
     ServiceRepository,
     ServiceRepositoryProtocol,
@@ -144,3 +145,16 @@ from servicephilosophy.repository import ServiceRepository
 from servicephilosophy.protocols import RepositoryFactoryProtocol, ServiceRepositoryProtocol
 from servicephilosophy.exceptions import FactoryRequiredError
 ```
+
+
+## Verification and releases
+
+The 0.1.2 source is a documentation/build-metadata patch over 0.1.1; factory
+access, protocols and exceptions retain their contracts. Runtime dependencies
+remain empty. Build tooling and development locks do not become runtime imports.
+Run [the standalone factory example](docs/examples/factory_service.py) with
+`uv run python docs/examples/factory_service.py`. The package does not select
+sessions, issue SQL, commit transactions, authorize actors or choose tenants.
+
+[Release instructions](RELEASING.md) distinguish checks from the publishing
+workflow, and [CHANGELOG.md](CHANGELOG.md) records the version boundary.

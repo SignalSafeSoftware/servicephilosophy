@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=84.2.1,<85", "wheel>=0.46,<1"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "servicephilosophy"
-version = "0.1.1"
+version = "0.1.2"
 description = "Typed factory-aware base for service and repository components without a domain model."
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
@@ -30,7 +30,7 @@ dev = [
     "pytest-cov>=6",
     "ruff>=0.15",
     "mypy>=1.11",
-    "build>=1.2",
+    "build>=1.6.1,<2",
     "twine>=5",
     "bandit>=1.7",
 ]
