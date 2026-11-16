@@ -1,6 +1,6 @@
 # servicePhilosophy current state — 2026-11-15
 
-Source candidate: 0.1.3, based on remote main 6c72e072112892951eb3ddbbff1aa2d6c4ca0740. Public registry baseline verified as 0.1.2. This is a documentation and version refresh; production source is unchanged. Publication and consumer adoption are separate recorded checks.
+Current verified release: 0.1.3. [The tag pipeline](https://github.com/SignalSafeSoftware/servicephilosophy/actions/runs/43796773592) passed and anonymous PyPI wheel/sdist readback matched the tagged runtime source at `86b76bb59eefd4830a92c2eb8dfe290f1afce2f2`. Consumer adoption remains a separate check.
 
 The library supplies typed factory-aware repository composition. It does not open sessions, select databases, issue SQL, commit transactions, authorize users or choose tenants. Runtime dependencies remain empty. Factories and application services own those decisions.
 

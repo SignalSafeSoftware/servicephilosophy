@@ -1,7 +1,6 @@
 # Releasing `servicephilosophy`
 
-The source prepares **0.1.2**. This is an approval candidate, not a declaration
-that publication happened. Repository: [SignalSafeSoftware/servicephilosophy](https://github.com/SignalSafeSoftware/servicephilosophy).
+The current release is **0.1.3**, verified from actual PyPI wheel/sdist metadata and runtime bytes at source commit `86b76bb59eefd4830a92c2eb8dfe290f1afce2f2`. Repository: [SignalSafeSoftware/servicephilosophy](https://github.com/SignalSafeSoftware/servicephilosophy).
 
 ## Checks and artifacts
 
@@ -43,7 +42,7 @@ scan and package smoke; a skipped/failed scan cannot publish.
 
 **Manual dispatch on `main` is a publishing action.** It is not a check-only preview.
 After explicit release approval and all required checks, use the exact approved
-`v0.1.2` tag on the reviewed main commit (or the existing approved main dispatch).
+`v0.1.3` tag on the reviewed main commit (or the existing approved main dispatch).
 A PR, release note or this file does not itself authorize tag creation or upload.
 Do not retag or retry a version until registry readback proves whether it exists.
 
