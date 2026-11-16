@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-15
+
+### Documentation
+
+- Refresh current-state and ecosystem boundary documentation against the published 0.1.2 baseline; retain the zero-runtime-dependency contract and caller-owned factory behavior.
+
 ## [0.1.2] - 2026-10-21
 
 ### Changed

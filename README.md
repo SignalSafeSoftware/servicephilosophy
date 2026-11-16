@@ -1,5 +1,7 @@
 # servicePhilosophy
 
+Current source status: [summary](docs/current-state-summary.md).
+
 A small typed foundation for factory-aware repository-style components.
 
 | | |
