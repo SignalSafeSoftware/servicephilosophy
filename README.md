@@ -151,8 +151,8 @@ from servicephilosophy.exceptions import FactoryRequiredError
 
 ## Verification and releases
 
-The 0.1.2 source is a documentation/build-metadata patch over 0.1.1; factory
-access, protocols and exceptions retain their contracts. Runtime dependencies
+The verified 0.1.3 release retains the existing factory, protocol and exception
+contracts. Its current source and release records are linked from [the summary](docs/current-state-summary.md). Runtime dependencies
 remain empty. Build tooling and development locks do not become runtime imports.
 Run [the standalone factory example](docs/examples/factory_service.py) with
 `uv run python docs/examples/factory_service.py`. The package does not select
