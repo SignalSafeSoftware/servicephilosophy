@@ -53,6 +53,7 @@ addopts = "--cov=servicephilosophy --cov-report=term-missing --cov-fail-under=10
 
 [tool.coverage.run]
 source = ["servicephilosophy"]
+branch = true
 
 [tool.coverage.report]
 fail_under = 100
