@@ -1,5 +1,11 @@
 # servicePhilosophy
 
+[![Build](https://github.com/SignalSafeSoftware/servicephilosophy/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/SignalSafeSoftware/servicephilosophy/actions/workflows/ci.yml)
+[![Quality gate](https://sonarcloud.io/api/project_badges/measure?project=SignalSafeSoftware_servicephilosophy&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=SignalSafeSoftware_servicephilosophy)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=SignalSafeSoftware_servicephilosophy&metric=coverage)](https://sonarcloud.io/summary/new_code?id=SignalSafeSoftware_servicephilosophy)
+[![PyPI version](https://img.shields.io/pypi/v/servicephilosophy?logo=pypi)](https://pypi.org/project/servicephilosophy/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/SignalSafeSoftware/servicephilosophy/blob/main/LICENSE)
+
 Current source status: [summary](docs/current-state-summary.md).
 
 A small typed foundation for factory-aware repository-style components.
